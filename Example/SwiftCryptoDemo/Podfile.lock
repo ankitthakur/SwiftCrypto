@@ -1,0 +1,16 @@
+PODS:
+  - SwiftCrypto (0.1.0)
+
+DEPENDENCIES:
+  - SwiftCrypto (from `../../`)
+
+EXTERNAL SOURCES:
+  SwiftCrypto:
+    :path: "../../"
+
+SPEC CHECKSUMS:
+  SwiftCrypto: 5067d8cde598dc57e98ab5906c1a24245262b205
+
+PODFILE CHECKSUM: fb1dfb7493e915f8348ce96a5649bd3faea90de7
+
+COCOAPODS: 1.0.1

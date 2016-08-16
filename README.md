@@ -8,12 +8,30 @@
 
 ## Description
 
-**SwiftCrypto** description.
+**SwiftCrypto** is currently supporting Elliptic Curve Crypto (ECC) and RSA public private key generation and conversion to PEM format.
 
 ## Usage
 
 ```swift
-<API>
+// Generate ECC Public Private Key
+let crypto1 = SwiftCrypto()
+crypto1.generateKeyPair(type: .EC, error: &error)
+print(error)
+print(crypto1.privateKey)
+print(crypto1.publicKey)
+
+// Generate RSA Public Private Key
+let crypto2 = SwiftCrypto()
+crypto2.generateKeyPair(type: .RSA, error: &error)
+print(error)
+print(crypto2.privateKey)
+print(crypto2.publicKey)
+
+// converting ECC Public Key to PEM Format
+SwiftCrypto.pemFormatKey(type: .EC, publicKey:crypto1.publicKey!)
+
+// converting RSA Public Key to PEM Format
+SwiftCrypto.pemFormatKey(type: .RSA, publicKey:crypto2.publicKey!)
 ```
 
 ## Installation

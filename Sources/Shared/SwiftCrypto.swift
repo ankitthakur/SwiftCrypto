@@ -80,7 +80,7 @@ public class SwiftCrypto
         return isKeyGenerated
     }
     
-    public func pemFormatKey(type:CryptoType, publicKey:SecKey) -> String? {
+    public class func pemFormatKey(type:CryptoType, publicKey:SecKey) -> String? {
         
         
         let encodedData:NSMutableData = NSMutableData()
@@ -130,10 +130,7 @@ public class SwiftCrypto
         return publicKeyBits
     }
     
-    
-    
-    
-    public class func keychainErrorMessage(errorCode:OSStatus) -> String{
+    class func keychainErrorMessage(errorCode:OSStatus) -> String{
         
         var errorMessage:String = "unknown";
         switch (errorCode) {
@@ -202,7 +199,7 @@ public class SwiftCrypto
         
     }
     
-    public class func getRSAPublicKeyBitsFromKey(secKey:SecKey) -> NSData? {
+    class func getRSAPublicKeyBitsFromKey(secKey:SecKey) -> NSData? {
         
         var queryPublicKey:[String:AnyObject] = [:]
         queryPublicKey[kSecClass as String] = kSecClassKey as NSString
@@ -211,7 +208,7 @@ public class SwiftCrypto
         return SwiftCrypto.publicKeyInData(queryPublicKey: queryPublicKey, secKey: secKey)
     }
     
-    public class func getECPublicKeyBitsFromKey(secKey:SecKey) -> NSData? {
+    class func getECPublicKeyBitsFromKey(secKey:SecKey) -> NSData? {
         
         var queryPublicKey:[String:AnyObject] = [:]
         queryPublicKey[kSecClass as String] = kSecClassKey as NSString

@@ -17,3 +17,7 @@ crypto2.generateKeyPair(type: .RSA, error: &error)
 print(error)
 print(crypto2.privateKey)
 print(crypto2.publicKey)
+
+print(SwiftCrypto.pemFormatKey(type: .EC, publicKey:crypto1.publicKey!))
+
+print(SwiftCrypto.pemFormatKey(type: .RSA, publicKey:crypto2.publicKey!))

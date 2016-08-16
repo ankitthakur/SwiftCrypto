@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name             = "SwiftCrypto"
-  s.summary          = "A short description of SwiftCrypto."
-  s.version          = "0.1.0"
+  s.summary          = "SwiftCrypto is currently supporting Elliptic Curve Crypto (ECC) and RSA public private key generation and conversion to PEM format."
+  s.version          = "0.0.1"
   s.homepage         = "https://github.com/Ankitthakur/SwiftCrypto"
   s.license          = 'MIT'
   s.author           = { "Ankit Thakur" => "ankitthakur85@icloud.com" }
@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://twitter.com/Ankitthakur'
 
   s.ios.deployment_target = '8.0'
-  s.osx.deployment_target = '10.9'
+  s.osx.deployment_target = '10.10'
   s.tvos.deployment_target = '9.2'
 
   s.requires_arc = true

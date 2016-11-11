@@ -11,8 +11,9 @@ internal let kSecp521r1:Int32 =  521
 
 // Boundaries for RSA KeySizes - default is currently 2048
 // RSA keysizes must be multiples of 8
-internal let kSecRSAMin:Int32 =  1024
-internal let kSecRSAMax:Int32 =  4096
+internal let kSecRSAMin:Int32  =  1024
+internal let kSecRSA2048:Int32 =  2048
+internal let kSecRSAMax:Int32  =  4096
 
 internal let byteSize:Int32 = 8;
 
@@ -23,34 +24,82 @@ internal let kRSAKeySize:Int32 = kSecRSAMin; // Key size for the RSA keypairs.
 internal let kRSAKeySizeBytes:Int32 = kRSAKeySize / byteSize;
 
 public enum CryptoType{
-    case EC
-    case RSA
+    case ec
+    case rsa
 }
-public class SwiftCrypto
+
+/// Key Size to generate keypair.
+public enum CryptoSize{
+    case ec192
+    case ec256
+    case ec384
+    case ec521
+    case rsa1024
+    case rsa2048
+    case rsa4096
+}
+
+public enum KeyFormat{
+    case none
+    case pem
+}
+open class SwiftCrypto
 {
     
-    public var publicKey:SecKey?
-    public var privateKey:SecKey?
-    public var keyType:CryptoType?
+    open var publicKey:SecKey?
+    open var privateKey:SecKey?
+    open var keyType:CryptoType?
     
     public init(){
         
     }
     
-    public func generateKeyPair(type:CryptoType, error:NSErrorPointer) -> Bool{
+    /// Generate a private/public keypair, containing the requested key size in bits.
+    ///
+    /// - parameters:
+    ///   - type: Crypto type is either EC or RSA.
+    ///   - size: For EC Type, size is 192, 256, 384 and 521. And for RSA Type, size is 1024, 2048 and 4096. If any of the size mismatch, then EC's default value will be EC256 and for RSA it is RSA1024.
+    ///   - error: Error pointer, if any of the error occur during generating public/private key pair.
+    
+    open func generateKeyPair(_ type:CryptoType, size:CryptoSize, error:NSErrorPointer) -> Bool{
         
         let keySize:Int32 = {
-            if type == .EC
+            if type == .ec
             {
-                return kECKeySize
+                if size == .ec192{
+                    return kSecp192r1
+                }
+                else if size == .ec256{
+                    return kSecp256r1
+                }
+                else if size == .ec384{
+                    return kSecp384r1
+                }
+                else if size == .ec521{
+                    return kSecp521r1
+                }
+                else {
+                    return kECKeySize
+                }
             }
             else{
-                return kRSAKeySize
+                if size == .rsa1024{
+                    return kSecRSAMin
+                }
+                else if size == .rsa2048{
+                    return kSecRSA2048
+                }
+                else if size == .rsa4096{
+                    return kSecRSAMax
+                }
+                else {
+                    return kRSAKeySize
+                }
             }
         }()
         
         let keyType:String = {
-            if type == .EC
+            if type == .ec
             {
                 return kSecAttrKeyTypeEC as String
             }
@@ -58,6 +107,8 @@ public class SwiftCrypto
                 return kSecAttrKeyTypeRSA as String
             }
         }()
+        
+        
         
         self.keyType = type
         
@@ -80,19 +131,26 @@ public class SwiftCrypto
         return isKeyGenerated
     }
     
-    public class func pemFormatKey(type:CryptoType, publicKey:SecKey) -> String? {
+    /// Convert SecKey to public key string format
+    ///
+    /// - parameters:
+    ///   - type: Crypto type is either EC or RSA.
+    ///   - format: PEM format or None. For None, "-----BEGIN PUBLIC KEY----" "------END PUBLIC KEY-----" will not get appear.
+    ///   - publicKey: Public Key of SecKey type. 
+    
+    open class func publicKeyString(_ type:CryptoType, format:KeyFormat, publicKey:SecKey) -> String? {
         
         
         let encodedData:NSMutableData = NSMutableData()
         
-        if type == .EC {
-            guard let pubKeyBits:NSData = SwiftCrypto.getECPublicKeyBitsFromKey(secKey: publicKey) else {
+        if type == .ec {
+            guard let pubKeyBits:Data = SwiftCrypto.ECPublicKeyBitsFromKey(publicKey) else {
                 return nil
             }
             encodedData.append(pubKeyBits as Data)
         }
-        else if type == .RSA{
-            guard let pubKeyBits:NSData = SwiftCrypto.getRSAPublicKeyBitsFromKey(secKey: publicKey) else {
+        else if type == .rsa{
+            guard let pubKeyBits:Data = SwiftCrypto.RSAPublicKeyBitsFromKey(publicKey) else {
                 return nil
             }
             encodedData.append(pubKeyBits as Data)
@@ -101,12 +159,16 @@ public class SwiftCrypto
         
         let encodedString:String = String(data: encodedData.base64EncodedData(options: .lineLength64Characters), encoding: .utf8)!
         
+        if format == .none {
+            return encodedString
+        }
+        
         let pemString =  String(format: "-----BEGIN PUBLIC KEY-----\n%@\n-----END PUBLIC KEY-----", encodedString)
         
         return pemString
     }
     
-    public class func publicKeyInData(queryPublicKey:[String:AnyObject], secKey:SecKey) -> NSData? {
+    class func publicKeyInData(_ queryPublicKey:[String:AnyObject], secKey:SecKey) -> Data? {
         
         // Temporarily add key to the Keychain, return as data:
         var attributes:[String:AnyObject] = queryPublicKey
@@ -116,21 +178,21 @@ public class SwiftCrypto
         
         var sanityCheck:OSStatus = noErr
         var result:CFTypeRef?
-        var publicKeyBits:NSData?
+        var publicKeyBits:Data?
         sanityCheck = SecItemAdd(attributes as CFDictionary, &result)
         
         if sanityCheck == errSecSuccess {
-            publicKeyBits = result as? NSData
+            publicKeyBits = result as? Data
             SecItemDelete(queryPublicKey as CFDictionary)
         }
         else{
-            print(keychainErrorMessage(errorCode:sanityCheck))
+            print(keychainErrorMessage(sanityCheck))
         }
         
         return publicKeyBits
     }
     
-    class func keychainErrorMessage(errorCode:OSStatus) -> String{
+    class func keychainErrorMessage(_ errorCode:OSStatus) -> String{
         
         var errorMessage:String = "unknown";
         switch (errorCode) {
@@ -199,22 +261,22 @@ public class SwiftCrypto
         
     }
     
-    class func getRSAPublicKeyBitsFromKey(secKey:SecKey) -> NSData? {
+    class func RSAPublicKeyBitsFromKey(_ secKey:SecKey) -> Data? {
         
         var queryPublicKey:[String:AnyObject] = [:]
         queryPublicKey[kSecClass as String] = kSecClassKey as NSString
         queryPublicKey[kSecAttrKeyType as String] = kSecAttrKeyTypeRSA as NSString
         
-        return SwiftCrypto.publicKeyInData(queryPublicKey: queryPublicKey, secKey: secKey)
+        return SwiftCrypto.publicKeyInData(queryPublicKey, secKey: secKey)
     }
     
-    class func getECPublicKeyBitsFromKey(secKey:SecKey) -> NSData? {
+    class func ECPublicKeyBitsFromKey(_ secKey:SecKey) -> Data? {
         
         var queryPublicKey:[String:AnyObject] = [:]
         queryPublicKey[kSecClass as String] = kSecClassKey as NSString
         queryPublicKey[kSecAttrKeyType as String] = kSecAttrKeyTypeEC as NSString
         
-        return SwiftCrypto.publicKeyInData(queryPublicKey: queryPublicKey, secKey: secKey)
+        return SwiftCrypto.publicKeyInData(queryPublicKey, secKey: secKey)
     }
     
     
